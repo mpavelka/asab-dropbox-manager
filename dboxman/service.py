@@ -1,8 +1,12 @@
 import asab
 import dropbox
+import logging
 import os
 import sys
 import dropbox.exceptions
+
+
+L = logging.getLogger(__name__)
 
 
 asab.Config.add_defaults({
@@ -30,7 +34,7 @@ class DropBoxService(asab.Service):
 		try:
 			f = open(file_path, "rb")
 		except IOError as e:
-			print("Can't open '{}': {}".format(file_path, e.strerror), file=sys.stderr)
+			L.error("Can't open '{}': {}".format(file_path, e.strerror))
 			return
 
 		# Default file destination
@@ -46,7 +50,7 @@ class DropBoxService(asab.Service):
 			try:
 				self._dropbox.files_upload(f.read(), dest_path)
 			except dropbox.exceptions.DropboxException as e:
-				print("Error when uploading file at once: {}".format(e), file=sys.stderr)
+				L.error("Error when uploading file at once: {}".format(e))
 				f.close()
 				return
 
@@ -58,14 +62,14 @@ class DropBoxService(asab.Service):
 							session_id=session.session_id,
 							offset=f.tell())
 			except dropbox.exceptions.DropboxException as e:
-				print("Error when starting dropbox session: {}".format(e), file=sys.stderr)
+				L.error("Error when starting dropbox session: {}".format(e))
 				f.close()
 				return
 
 			try:
 				commit 	= dropbox.files.CommitInfo(path=dest_path)
 			except dropbox.exceptions.DropboxException as e:
-				print("Error when commiting info to file at once: {}".format(e), file=sys.stderr)
+				L.error("Error when commiting info to file at once: {}".format(e))
 				f.close()
 				return
 
@@ -78,7 +82,7 @@ class DropBoxService(asab.Service):
 							cursor.offset)
 						cursor.offset = f.tell()
 					except dropbox.exceptions.DropboxException as e:
-						print("Error when finishing file upload: {}".format(e), file=sys.stderr)
+						L.error("Error when finishing file upload: {}".format(e))
 						f.close()
 						return
 				else:
@@ -88,6 +92,6 @@ class DropBoxService(asab.Service):
 							cursor,
 							commit)
 					except dropbox.exceptions.DropboxException as e:
-						print("Error when finishing file upload: {}".format(e), file=sys.stderr)
+						L.error("Error when finishing file upload: {}".format(e))
 						f.close()
 						return
